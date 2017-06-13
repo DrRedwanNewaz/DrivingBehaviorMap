@@ -4,6 +4,7 @@ import scipy.io as sio
 from PIL import Image
 from sklearn.preprocessing import normalize
 
+
 # Python file for mapping gps data and color information without down sampling for precise results)
 
 
@@ -16,7 +17,7 @@ class CMap(object):
         self.path =[]
 
     def read_path(self):
-        matlab_var = sio.loadmat('Driver.mat')
+        matlab_var = sio.loadmat('matlabFile/Driver.mat')
         data = matlab_var['Driver']
         path = data[0, self.driver_id]['path']
         for ii in range(3):
@@ -60,7 +61,11 @@ class CMap(object):
         self.lat = new_path[:, 0]
         self.lng = new_path[:, 1]
         cmap = self.norm(cmap)
-        plt.scatter(self.lat, self.lng, facecolor=cmap)
+        cmap= np.array(cmap)
+        self.lat = np.array(self.lat)
+        self.lng = np.array(self.lng)
+        # rgb = np.random.random((len(cmap), 3))
+        plt.scatter(self.lat, self.lng,s=200, facecolor=cmap)
         plt.show()
 
 
@@ -76,6 +81,7 @@ class DataBase(object):
         self.lat = []
         self.lng = []
         self.path =[]
+        # __, self.axarr = plt.subplots(3, 4)
 
     def read_path(self):
         matlab_var = sio.loadmat('matlabFile/Driver.mat')
@@ -111,6 +117,11 @@ class DataBase(object):
             inp = (inp - inp.min(0)) / (inp.max(0) - inp.min(0))
         return inp
 
+    def sub2mat(self,driver_id):
+        x = int(driver_id / 4)
+        y = driver_id % 4
+        return x, y
+
     def show(self):
         cmap = self.data
         dim_cmap = np.shape(cmap)
@@ -127,9 +138,12 @@ class DataBase(object):
         self.lat = new_path[:, 0]
         self.lng = new_path[:, 1]
         cmap = normalize(cmap)
+        cmap=np.array(cmap)
+        self.lat=np.array(self.lat)
+        self.lng=np.array(self.lng)
         plt.figure()
-        plt.scatter(self.lat, self.lng, facecolor=(cmap))
-
+        plt.scatter(self.lat, self.lng,facecolor=cmap)
+        # self.axarr[self.sub2mat(self.driver_id)].scatter(self.lat, self.lng, facecolor=cmap)
     def view(self):
         plt.show()
 

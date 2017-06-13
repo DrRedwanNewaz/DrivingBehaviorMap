@@ -29,16 +29,16 @@ def model_generator(latent_dim, input_shape, hidden_dim=90, reg=lambda: l1_l2(1e
 
 
 # Encoder model
-def model_encoder(latent_dim, input_shape, hidden_dim=45, reg=lambda: l1(1e-5)):
+def model_encoder(latent_dim, input_shape, hidden_dim=90, reg=lambda: l1(1e-5)):
     x = Input(input_shape, name="x")
     h = Flatten()(x)
     h = Dense(int(hidden_dim), name="encoder_h1", W_regularizer=reg())(h)
     h = BatchNormalization()(h)
     h = LeakyReLU(0.2)(h)
-    h = Dense(int(hidden_dim / 2), name="encoder_h2", W_regularizer=reg())(h)
+    h = Dense(int(hidden_dim / 4), name="encoder_h2", W_regularizer=reg())(h)
     h = BatchNormalization()(h)
     h = LeakyReLU(0.2)(h)
-    h = Dense(int(hidden_dim / 4), name="encoder_h3", W_regularizer=reg())(h)
+    h = Dense(int(hidden_dim / 2), name="encoder_h3", W_regularizer=reg())(h)
     h = BatchNormalization()(h)
     h = LeakyReLU(0.2)(h)
     mu = Dense(latent_dim, name="encoder_mu", W_regularizer=reg())(h)
@@ -120,8 +120,8 @@ def driver_gan(path, adversarial_optimizer):
                              player_params=[generative_params, discriminator_train.trainable_weights],
                              player_names=["generator", "discriminator"])
     model.adversarial_compile(adversarial_optimizer=adversarial_optimizer,
-                              player_optimizers=[Adam(1e-4, decay=1e-4), Adam(1e-3, decay=1e-4)],
-                              loss='mse')
+                              player_optimizers=[Adam(1e-7, decay=1e-7), Adam(1e-6, decay=1e-7)],
+                              loss='binary_crossentropy')
 
     # load driver data
     train_dataset = [1,2,5]
@@ -132,16 +132,16 @@ def driver_gan(path, adversarial_optimizer):
     # ---------------------------------------------------------------------------------
     # callback for image grid of generated samples
     def generator_sampler():
-        zsamples = np.random.normal(size=(1 * 3, latent_dim))  #---------------------------------> (10,10)
-        return generator.predict(zsamples).reshape((1, 3, 15, 6))# confused ***********************************default (10,10,28,28)
+        zsamples = np.random.normal(size=(1 * 1, latent_dim))  #---------------------------------> (10,10)
+        return generator.predict(zsamples).reshape((1, 1, 15, 6))# confused ***********************************default (10,10,28,28)
 
 
     # callback for image grid of autoencoded samples
     def autoencoder_sampler():
-        xsamples = n_choice(xtest, 3) # the number of testdata set
-        xrep = np.repeat(xsamples, 1, axis=0) # the number of train dataset
-        xgen = autoencoder.predict(xrep).reshape((1, 3, 15, 6))
-        xsamples = xsamples.reshape((1, 3, 15, 6))
+        xsamples = n_choice(xtest, 10) # the number of testdata set
+        xrep = np.repeat(xsamples, 5, axis=0) # the number of train dataset
+        xgen = autoencoder.predict(xrep).reshape((1, 1, 15, 6))
+        xsamples = xsamples.reshape((1, 1, 15, 6))
         x = np.concatenate((xsamples, xgen), axis=1)
         return x
 
@@ -150,7 +150,7 @@ def driver_gan(path, adversarial_optimizer):
     y = gan_targets(xtrain.shape[0])
     ytest = gan_targets(xtest.shape[0])
     history = model.fit(x=xtrain, y=y, validation_data=(xtest, ytest),
-                        nb_epoch=100, batch_size=1, verbose=0)
+                        nb_epoch=25, batch_size=10, verbose=0)
 
     # save history
     df = pd.DataFrame(history.history)

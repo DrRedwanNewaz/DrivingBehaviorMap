@@ -1,11 +1,13 @@
 import numpy as np
 from keras.models import load_model
 from dataloader import data_base
-from update_cmap import DataBase,rgb_converter
+from update_cmap import DataBase,CMap
 
 # loading h5 file
-generator = load_model('model/generator-2.h5')
+generator = load_model('model/generator-2s.h5')
 encoder = load_model('model/encoder_driver_2.h5')
+
+
 
 for id in range(9):
     id = id+1
@@ -16,7 +18,7 @@ for id in range(9):
     gen = np.array(generator.predict(zsamples))
     gen = test.reshape((test.shape[0], -1), order='F')
     colormap = encoder.predict(gen)
-    obj = DataBase(data=colormap, driver_id=id)
+    obj = CMap(data=colormap, driver_id=id)
     obj.show()
 
 obj.view()
